@@ -1,0 +1,61 @@
+name: "Slack Failure Notifications"
+description: Create slack notification for workflow failures
+inputs:
+  SLACK_API_TOKEN:
+    description: Slack Auth
+    required: true
+  SLACK_WEBHOOK:
+    description: Dev slack channel
+    required: false
+  SLACK_WEBHOOK_INFRA:
+    description: Infra slack channel
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Check secrets presence
+      id: is-infra
+      shell: bash
+      run: |
+        if [ "${{ inputs.SLACK_WEBHOOK }}" == "" ]; then
+          echo ::set-output name=dev::false
+        else
+          echo ::set-output name=dev::true
+        fi
+        if [ "${{ inputs.SLACK_WEBHOOK_INFRA }}" == "" ]; then
+          echo ::set-output name=infra::false
+        else
+          echo ::set-output name=infra::true
+        fi
+    - name: Debug Dev
+      run: echo "Is dev ${{ steps.is-infra.outputs.dev }}"
+      shell: bash
+    - name: Debug Infra
+      run: echo "Is infra ${{ steps.is-infra.outputs.infra }}"
+      shell: bash
+    - name: Find Slack user
+      if: github.ref == 'refs/heads/master' && steps.is-infra.outputs.dev == 'true'
+      id: find-slack-user
+      uses: circle9r/find-slack-user-action@v1.0.2
+      with:
+        slack-token: ${{ inputs.SLACK_API_TOKEN }}
+    - name: Slack any failure
+      uses: 8398a7/action-slack@v3
+      if: github.ref == 'refs/heads/master' && steps.is-infra.outputs.dev == 'true'
+      with:
+        mention: '${{ steps.find-slack-user.outputs.member-id }}'
+        if_mention: failure
+        status: ${{ job.status }}
+        fields: repo,author,commit,action,workflow,job,took
+      env:
+        SLACK_WEBHOOK_URL: ${{ inputs.SLACK_WEBHOOK }}
+    - name: Slack any failure to infra
+      uses: 8398a7/action-slack@v3
+      if: github.ref == 'refs/heads/master' && steps.is-infra.outputs.infra == 'true'
+      with:
+        mention: 'subteam^S02CZJ9RV6Y'
+        if_mention: failure
+        status: ${{ job.status }}
+        fields: repo,author,commit,action,workflow,job,took
+      env:
+        SLACK_WEBHOOK_URL: ${{ inputs.SLACK_WEBHOOK_INFRA }}
