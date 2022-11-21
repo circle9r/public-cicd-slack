@@ -34,14 +34,14 @@ runs:
       run: echo "Is infra ${{ steps.is-infra.outputs.infra }}"
       shell: bash
     - name: Find Slack user
-      if: github.ref == 'refs/heads/master' && steps.is-infra.outputs.dev == 'true'
+      if: ( github.ref_name == 'master' || github.ref_name == 'main' ) && steps.is-infra.outputs.dev == 'true'
       id: find-slack-user
-      uses: circle9r/find-slack-user-action@v1.0.2
+      uses: circle9r/find-slack-user-action@v1.1.0
       with:
         slack-token: ${{ inputs.SLACK_API_TOKEN }}
     - name: Slack any failure
       uses: 8398a7/action-slack@v3
-      if: github.ref == 'refs/heads/master' && steps.is-infra.outputs.dev == 'true'
+      if: ( github.ref_name == 'master' || github.ref_name == 'main' ) && steps.is-infra.outputs.dev == 'true'
       with:
         mention: '${{ steps.find-slack-user.outputs.member-id }}'
         if_mention: failure
@@ -51,7 +51,7 @@ runs:
         SLACK_WEBHOOK_URL: ${{ inputs.SLACK_WEBHOOK }}
     - name: Slack any failure to infra
       uses: 8398a7/action-slack@v3
-      if: github.ref == 'refs/heads/master' && steps.is-infra.outputs.infra == 'true'
+      if: ( github.ref_name == 'master' || github.ref_name == 'main' ) && steps.is-infra.outputs.infra == 'true'
       with:
         mention: 'subteam^S02CZJ9RV6Y'
         if_mention: failure
