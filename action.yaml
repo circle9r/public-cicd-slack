@@ -33,12 +33,26 @@ runs:
     - name: Debug Infra
       run: echo "Is infra ${{ steps.is-infra.outputs.infra }}"
       shell: bash
+    - name: Get Actor
+      shell: bash
+      run: |
+        echo "Get Actor for slack"
+        if [ ${{ github.event.head_commit.author.name }} ]; then
+          gh_user=${{ github.event.head_commit.author.name}}
+        elif [ ${{ github.actor }} ]; then
+          gh_user=${{ github.actor }}
+        else
+          gh_user=unknown
+        fi
+        echo $gh_user
+        echo "gh_user=$gh_user" >> $GITHUB_ENV
     - name: Find Slack user
       if: ( github.ref_name == 'master' || github.ref_name == 'main' ) && steps.is-infra.outputs.dev == 'true'
       id: find-slack-user
       uses: circle9r/find-slack-user-action@v1.1.0
       with:
         slack-token: ${{ inputs.SLACK_API_TOKEN }}
+        username: ${{ env.gh_user }}
     - name: Slack any failure
       uses: 8398a7/action-slack@v3
       if: ( github.ref_name == 'master' || github.ref_name == 'main' ) && steps.is-infra.outputs.dev == 'true'
