@@ -18,14 +18,14 @@ runs:
       shell: bash
       run: |
         if [ "${{ inputs.SLACK_WEBHOOK }}" == "" ]; then
-          echo ::set-output name=dev::false
+          echo "dev=false" >> $GITHUB_OUTPUT
         else
-          echo ::set-output name=dev::true
+          echo "dev=true" >> $GITHUB_OUTPUT
         fi
         if [ "${{ inputs.SLACK_WEBHOOK_INFRA }}" == "" ]; then
-          echo ::set-output name=infra::false
+          echo "infra=false" >> $GITHUB_OUTPUT
         else
-          echo ::set-output name=infra::true
+          echo "infra=true" >> $GITHUB_OUTPUT
         fi
     - name: Debug Dev
       run: echo "Is dev ${{ steps.is-infra.outputs.dev }}"
